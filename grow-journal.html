@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grow Journal">
+<meta name="theme-color" content="#080b08">
+<title>Grow Journal</title>
+
+<!-- PWA Icon inline SVG as data URI -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23080b08' rx='40'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle'%3E🌿%3C/text%3E%3C/svg%3E">
+
+<style>
+:root{
+  --bg:#080b08;--s:#0f130f;--c:#141a14;--b:#1e281e;--b2:#2a382a;
+  --g:#4ade80;--g2:#86efac;--p:#d8b4fe;--a:#fcd34d;--r:#f87171;--bl:#7dd3fc;
+  --t:#e8f0e8;--m:#5a6e5a;--m2:#8a9e8a;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,'Outfit',sans-serif;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.hdr{
+  background:rgba(8,11,8,0.95);border-bottom:1px solid var(--b);
+  padding:calc(var(--safe-top) + 10px) 16px 10px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  backdrop-filter:blur(12px);position:sticky;top:0;z-index:10;
+}
+.logo{font-weight:900;font-size:0.92rem;display:flex;align-items:center;gap:7px;}
+.ldot{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+.sbadges{display:flex;gap:4px;}
+.sb{font-size:0.56rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:20px;}
+.sb1{background:rgba(216,180,254,.12);color:var(--p);border:1px solid rgba(216,180,254,.2);}
+.sb2{background:rgba(74,222,128,.1);color:var(--g);border:1px solid rgba(74,222,128,.2);}
+
+/* ── NAV TABS ── */
+.tabs{
+  display:flex;overflow-x:auto;scrollbar-width:none;
+  border-bottom:1px solid var(--b);flex-shrink:0;
+  background:rgba(8,11,8,0.9);
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;font-size:0.65rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+  padding:8px 13px 9px;border:none;background:none;color:var(--m);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;font-family:inherit;}
+.tab.active{color:var(--g);border-bottom-color:var(--g);}
+
+/* ── PAGES ── */
+.pages{flex:1;overflow:hidden;position:relative;}
+.pg{display:none;height:100%;overflow-y:auto;padding:14px 16px calc(var(--safe-bot) + 24px);max-width:640px;margin:0 auto;}
+.pg.active{display:block;}
+
+/* CARDS & SECTIONS */
+.sec{font-size:0.6rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--m);
+  margin-bottom:8px;margin-top:16px;display:flex;align-items:center;gap:8px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--b);}
+.card{background:var(--c);border:1px solid var(--b);border-radius:11px;padding:13px 14px;margin-bottom:8px;}
+
+/* BANNER */
+.banner{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(216,180,254,.04));
+  border:1px solid var(--b2);border-radius:14px;padding:13px 15px;margin-bottom:12px;
+  display:flex;align-items:center;gap:11px;}
+.bday{font-weight:900;font-size:2.6rem;line-height:1;color:var(--g);min-width:48px;}
+.binfo{flex:1;}
+.bphase{font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--m2);margin-bottom:1px;}
+.btitle{font-size:0.88rem;font-weight:700;margin-bottom:2px;}
+.bmeta{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--m);}
+.bnav{display:flex;gap:4px;}
+.nbtn{background:var(--c);border:1px solid var(--b2);border-radius:7px;padding:5px 9px;
+  font-size:0.65rem;font-weight:700;color:var(--m2);cursor:pointer;transition:all .15s;}
+.nbtn:hover{border-color:var(--g);color:var(--g);}
+
+/* WATER BAR */
+.wbar{display:flex;gap:3px;margin-bottom:11px;}
+.ws{flex:1;height:4px;border-radius:2px;background:var(--b);}
+.ws.a{background:var(--g);box-shadow:0 0 5px rgba(74,222,128,.4);}
+.ws.d{background:var(--m);}
+
+/* WATER INDICATOR */
+.wi{border-radius:9px;padding:9px 12px;margin-bottom:10px;display:flex;align-items:center;gap:9px;font-size:0.76rem;font-weight:600;}
+.wi.on{background:rgba(125,211,252,.09);border:1px solid rgba(125,211,252,.22);color:var(--bl);}
+.wi.off{background:rgba(90,110,90,.12);border:1px solid var(--b2);color:var(--m2);}
+.wii{font-size:1.3rem;flex-shrink:0;}
+
+/* CHECKLIST */
+.chklist{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.ci{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:10px 12px;
+  display:flex;align-items:flex-start;gap:9px;cursor:pointer;transition:all .15s;user-select:none;}
+.ci:active{opacity:.7;}
+.ci.done{opacity:.38;}
+.ci.done .cil{text-decoration:line-through;color:var(--m);}
+.cib{width:18px;height:18px;border-radius:5px;border:2px solid var(--b2);flex-shrink:0;
+  margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:.6rem;transition:all .15s;}
+.ci.done .cib{background:var(--g);border-color:var(--g);color:#000;}
+.cit{flex:1;}
+.cil{font-size:0.8rem;font-weight:500;margin-bottom:1px;}
+.cis{font-size:0.64rem;color:var(--m2);font-family:'DM Mono',monospace;line-height:1.4;}
+.cat{font-size:.52rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 5px;border-radius:20px;flex-shrink:0;margin-top:1px;}
+.cwater{background:rgba(125,211,252,.12);color:var(--bl);}
+.cfeed{background:rgba(74,222,128,.1);color:var(--g);}
+.ccheck{background:rgba(252,211,77,.12);color:var(--a);}
+.ctrain{background:rgba(216,180,254,.1);color:var(--p);}
+.cflush{background:rgba(248,113,113,.12);color:var(--r);}
+
+/* PARAMS GRID */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:7px;}
+.pgrid.c2{grid-template-columns:repeat(2,1fr);}
+.pc{background:var(--c);border:1px solid var(--b);border-radius:9px;padding:8px 10px;}
+.pl{font-size:.54rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);margin-bottom:3px;}
+.pc input,.pc select{width:100%;background:none;border:none;outline:none;
+  font-family:'DM Mono',monospace;font-size:.9rem;font-weight:500;color:var(--t);}
+.pc input::placeholder{color:var(--m);}
+.pc select option{background:#1a241a;}
+
+/* TEXTAREA */
+.ta{width:100%;background:var(--c);border:1px solid var(--b);border-radius:9px;
+  padding:10px 12px;color:var(--t);font-family:inherit;font-size:.8rem;resize:none;
+  outline:none;min-height:72px;transition:border-color .2s;margin-bottom:8px;}
+.ta:focus{border-color:var(--g);}
+.ta::placeholder{color:var(--m);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;
+  border:none;cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:700;transition:all .15s;}
+.btn-p{background:var(--g);color:#000;box-shadow:0 0 14px rgba(74,222,128,.18);}
+.btn-p:hover{background:var(--g2);}
+.btn-p:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}
+.btn-g{background:var(--c);color:var(--m2);border:1px solid var(--b);}
+.btn-g:hover{border-color:var(--b2);color:var(--t);}
+.btn-f{width:100%;justify-content:center;}
+.btn-sm{padding:6px 11px;font-size:.72rem;}
+.btn-icon{padding:9px;}
+
+/* REF TABLE */
+.rbox{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:11px 13px;margin-bottom:8px;}
+.rtitle{font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:7px;}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--b);}
+.rrow:last-child{border-bottom:none;}
+.rk{font-size:.7rem;color:var(--m2);}
+.rv{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:600;color:var(--t);}
+.rv.g{color:var(--g)}.rv.a{color:var(--a)}.rv.b{color:var(--bl)}.rv.p{color:var(--p)}.rv.r{color:var(--r)}
+
+/* ALERTS */
+.al{border-radius:9px;padding:9px 12px;font-size:.74rem;line-height:1.6;
+  margin-bottom:9px;display:flex;gap:8px;align-items:flex-start;}
+.al.info{background:rgba(125,211,252,.07);border:1px solid rgba(125,211,252,.18);color:var(--bl);}
+.al.warn{background:rgba(252,211,77,.07);border:1px solid rgba(252,211,77,.18);color:var(--a);}
+.al.ok{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.18);color:var(--g);}
+.al.err{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.18);color:var(--r);}
+
+/* PHOTO */
+.pzone{border:2px dashed var(--b2);border-radius:11px;padding:22px 14px;text-align:center;
+  cursor:pointer;transition:all .2s;background:var(--s);position:relative;overflow:hidden;margin-bottom:9px;}
+.pzone:hover{border-color:var(--g);}
+.pzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.prev-img{width:100%;border-radius:10px;display:none;margin-bottom:9px;max-height:250px;object-fit:cover;}
+
+/* AI BOX */
+.aibox{background:var(--s);border:1px solid var(--b2);border-radius:11px;overflow:hidden;margin-bottom:9px;}
+.aihdr{padding:8px 12px;background:rgba(74,222,128,.05);border-bottom:1px solid var(--b);
+  display:flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;}
+.spin{width:12px;height:12px;border:2px solid var(--b2);border-top-color:var(--g);
+  border-radius:50%;animation:sp .8s linear infinite;flex-shrink:0;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.aibody{padding:12px;font-size:.78rem;line-height:1.75;color:var(--m2);white-space:pre-wrap;min-height:40px;}
+.aibody.ok{color:var(--t);}
+
+/* CHAT */
+.chat{display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:300px;}
+.chatlog{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;min-height:0;}
+.chatlog::-webkit-scrollbar{width:2px;}
+.chatlog::-webkit-scrollbar-thumb{background:var(--b2);}
+.msg{border-radius:10px;padding:9px 12px;font-size:.79rem;line-height:1.7;max-width:92%;word-break:break-word;}
+.msg.u{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.15);align-self:flex-end;color:var(--g2);}
+.msg.a{background:var(--c);border:1px solid var(--b);align-self:flex-start;color:var(--t);}
+.msg.ld{color:var(--m);}
+.chatinput{display:flex;gap:7px;align-items:flex-end;padding-top:8px;border-top:1px solid var(--b);flex-shrink:0;}
+.cha{flex:1;background:var(--c);border:1px solid var(--b);border-radius:9px;padding:9px 12px;
+  color:var(--t);font-family:inherit;font-size:.8rem;resize:none;outline:none;
+  min-height:40px;max-height:100px;transition:border-color .2s;}
+.cha:focus{border-color:var(--g);}
+.cha::placeholder{color:var(--m);}
+.qqs{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;flex-shrink:0;}
+
+/* LOG */
+.le{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:11px 12px;
+  margin-bottom:7px;position:relative;}
+.le::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--g);}
+.le.ana::before{background:var(--p);}
+.letop{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.leday{font-weight:800;font-size:.83rem;}
+.ledate{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--m);}
+.leparams{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px;}
+.lep{font-family:'DM Mono',monospace;font-size:.6rem;padding:2px 5px;background:var(--s);border-radius:20px;color:var(--m2);}
+.lenote{font-size:.74rem;color:var(--m2);line-height:1.55;margin-bottom:5px;}
+.leana{font-size:.72rem;line-height:1.6;color:#a8c8a8;border-top:1px solid var(--b);padding-top:6px;margin-top:3px;white-space:pre-wrap;}
+.leimg{width:100%;border-radius:7px;margin-top:6px;max-height:180px;object-fit:cover;}
+.ledel{background:none;border:none;color:var(--m);cursor:pointer;font-size:.66rem;padding:2px 5px;border-radius:5px;}
+.ledel:hover{background:rgba(248,113,113,.1);color:var(--r);}
+.lbadge{font-size:.52rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:1px 5px;border-radius:20px;}
+.lbd{background:rgba(74,222,128,.1);color:var(--g);}
+.lba{background:rgba(216,180,254,.1);color:var(--p);}
+
+/* STATS */
+.srow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+.sc{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:10px 12px;text-align:center;}
+.sv{font-size:1.3rem;font-weight:900;color:var(--g);line-height:1;}
+.sl{font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);margin-top:2px;}
+
+/* CHART */
+.cw{background:var(--c);border:1px solid var(--b);border-radius:11px;padding:11px;margin-bottom:9px;}
+.cwt{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:7px;}
+.cwh{position:relative;height:100px;}
+svg.ch{width:100%;height:100%;}
+.cl1{fill:none;stroke:var(--g);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.cl2{fill:none;stroke:var(--p);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.cd1{fill:var(--g)}.cd2{fill:var(--p)}
+.cax{stroke:var(--b);stroke-width:1;}
+.clbl{fill:var(--m);font-size:8px;font-family:'DM Mono',monospace;}
+.cleg{display:flex;gap:9px;margin-top:5px;}
+.cli{display:flex;align-items:center;gap:4px;font-size:.6rem;color:var(--m2);}
+.cld{width:6px;height:6px;border-radius:50%;}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:22px;}
+.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:1px;background:var(--b);}
+.tli{position:relative;margin-bottom:14px;}
+.tld{position:absolute;left:-17px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--b2);border:2px solid var(--b2);}
+.tli.act .tld{background:var(--g);border-color:var(--g);box-shadow:0 0 7px rgba(74,222,128,.5);}
+.tli.dn .tld{background:var(--m);border-color:var(--m);}
+.tlw{font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:2px;}
+.tlt{font-size:.82rem;font-weight:700;margin-bottom:2px;}
+.tli.act .tlt{color:var(--g);}
+.tld2{font-size:.68rem;color:var(--m2);line-height:1.5;}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(--safe-bot) + 16px);left:50%;transform:translateX(-50%);
+  padding:8px 16px;border-radius:20px;font-size:.76rem;font-weight:700;z-index:999;
+  display:none;white-space:nowrap;pointer-events:none;}
+
+/* EMPTY */
+.empty{text-align:center;padding:32px 14px;color:var(--m);}
+.empty .ei{font-size:1.8rem;margin-bottom:8px;opacity:.4;}
+.empty p{font-size:.76rem;line-height:1.7;}
+
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .25s ease forwards;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo"><div class="ldot"></div>GROW JOURNAL</div>
+  <div class="sbadges"><span class="sb sb1">Slurrup ×3</span><span class="sb sb2">P.Gelato ×3</span></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="go('today',this)">🌿 Heute</button>
+  <button class="tab" onclick="go('chat',this)">🤖 KI-Chat</button>
+  <button class="tab" onclick="go('analyze',this)">📸 Analyse</button>
+  <button class="tab" onclick="go('log',this)">📓 Tagebuch</button>
+  <button class="tab" onclick="go('plan',this)">📅 Plan</button>
+  <button class="tab" onclick="go('guide',this)">📖 Guide</button>
+</div>
+
+<div class="pages">
+
+<!-- ══ HEUTE ══ -->
+<div id="pg-today" class="pg active">
+  <div class="banner">
+    <div class="bday" id="bday">7</div>
+    <div class="binfo">
+      <div class="bphase" id="bphase">Blüte · Woche 1</div>
+      <div class="btitle" id="btitle">Frühe Blüte</div>
+      <div class="bmeta" id="bmeta">0/0 erledigt</div>
+    </div>
+    <div class="bnav"><button class="nbtn" onclick="prevDay()">◀</button><button class="nbtn" onclick="nextDay()">▶</button></div>
+  </div>
+  <div class="wbar" id="wbar"></div>
+  <div id="windi"></div>
+  <div id="talerts"></div>
+  <div class="sec">Aufgaben</div>
+  <div class="chklist" id="tcl"></div>
+  <div class="sec">Zielwerte heute</div>
+  <div class="rbox" id="ttargets"></div>
+  <div class="sec">Messwerte</div>
+  <div class="pgrid">
+    <div class="pc"><div class="pl">Temp °C</div><input type="number" id="it" placeholder="25" step="0.1"></div>
+    <div class="pc"><div class="pl">rH %</div><input type="number" id="ir" placeholder="45"></div>
+    <div class="pc"><div class="pl">pH Wasser</div><input type="number" id="ip" placeholder="6.3" step="0.1"></div>
+    <div class="pc"><div class="pl">EC</div><input type="number" id="ie" placeholder="1.4" step="0.1"></div>
+    <div class="pc"><div class="pl">Drain pH</div><input type="number" id="id" placeholder="6.4" step="0.1"></div>
+    <div class="pc"><div class="pl">Wasser ml</div><input type="number" id="iw" placeholder="500"></div>
+  </div>
+  <div class="pgrid c2">
+    <div class="pc"><div class="pl">Dünger</div>
+      <select id="if">
+        <option value="">— keiner —</option>
+        <option value="Hesi Bloom + TNT 50%">Hesi Bloom + TNT 50%</option>
+        <option value="Hesi Bloom 50%">Hesi Bloom 50%</option>
+        <option value="Hesi Bloom + PK 13/14">Hesi Bloom + PK 13/14</option>
+        <option value="Klares Wasser">Klares Wasser</option>
+        <option value="Flush 15-17L">Flush 15–17L</option>
+      </select>
+    </div>
+    <div class="pc"><div class="pl">VPD kPa</div><input type="number" id="iv" placeholder="1.2" step="0.1"></div>
+  </div>
+  <textarea class="ta" id="tn" placeholder="Beobachtungen: Blütenstand, Geruch, Blattfarbe, Stresszeichen..."></textarea>
+  <button class="btn btn-p btn-f" onclick="saveDay()">💾 Tag speichern & weiter</button>
+</div>
+
+<!-- ══ CHAT ══ -->
+<div id="pg-chat" class="pg">
+  <div class="chat">
+    <div class="chatlog" id="chatlog">
+      <div class="msg a">Hallo! Ich bin dein persönlicher Grow-Assistent 🌿<br><br>Ich kenne dein komplettes Setup:<br>• <strong>3x Slurrup + 3x Purple Gelato</strong> (Feminized)<br>• Indoor · Erde (BioBizz Light Mix) · 12/12<br>• Hesi-Schema 50% · pH 6.2–6.5<br>• SF4500 LED · SCROG · Inline-Lüfter<br><br><strong>Slurrup:</strong> 9–10 Wochen Blüte · Indica-Hybrid · Traube/Gassy<br><strong>Purple Gelato:</strong> 8–9 Wochen · dichte Buds → Schimmelrisiko!<br><br>Stelle mir jede Frage zu deinem Grow!</div>
+    </div>
+    <div class="chatinput">
+      <textarea class="cha" id="chinput" placeholder="Frage stellen..." rows="1" onkeydown="ckd(event)" oninput="ars(this)"></textarea>
+      <button class="btn btn-p btn-icon" id="chbtn" onclick="sendChat()">➤</button>
+    </div>
+    <div class="qqs">
+      <button class="btn btn-g btn-sm" onclick="qq('Wie gieße ich richtig mit Light Mix in der Blüte?')">💧 Gießen?</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Was und wann soll ich mit Hesi 50% düngen?')">🌿 Düngen?</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Ist meine Luftfeuchtigkeit ok?')">💨 rH?</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Wann und wie viel Wasser beim Flush?')">🚿 Flush?</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Woran erkenne ich Erntereife bei Slurrup und Purple Gelato?')">🌾 Ernte?</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Purple Gelato hängt etwas — was tun?')">⚠️ PG hängt</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Ich sehe gelbe untere Blätter — Stickstoffmangel?')">🟡 Gelbe Blätter</button>
+      <button class="btn btn-g btn-sm" onclick="qq('Mein VPD ist zu hoch — wie senke ich ihn?')">📊 VPD</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ANALYSE ══ -->
+<div id="pg-analyze" class="pg">
+  <div class="al ok"><span>📸</span><div>Foto hochladen → Claude analysiert Blütenstand, Mängel & Stress basierend auf beiden Grow-Guides + Strain-Daten.</div></div>
+  <img id="pimg" class="prev-img" alt="">
+  <div class="pzone">
+    <input type="file" accept="image/*" onchange="hphoto(event)">
+    <div style="font-size:1.5rem;margin-bottom:5px;">📷</div>
+    <div style="font-size:.78rem;color:var(--m2);font-weight:600;">Foto auswählen oder aufnehmen</div>
+    <div style="font-size:.62rem;color:var(--m);margin-top:2px;">Alle Pflanzen oder Einzelpflanze</div>
+  </div>
+  <div class="pgrid">
+    <div class="pc"><div class="pl">Blüte-Tag</div><input type="number" id="ad" placeholder="7"></div>
+    <div class="pc"><div class="pl">Temp °C</div><input type="number" id="at" placeholder="25"></div>
+    <div class="pc"><div class="pl">rH %</div><input type="number" id="ar" placeholder="45"></div>
+  </div>
+  <textarea class="ta" id="an" placeholder="Was fällt dir auf? Sorgen, Beobachtungen..." rows="2"></textarea>
+  <button class="btn btn-p btn-f" id="abtn" onclick="runAna()" disabled>🔍 KI-Analyse starten</button>
+  <div id="aibox" class="aibox" style="display:none;margin-top:11px;">
+    <div class="aihdr"><div class="spin" id="asp"></div><span id="asta">Analysiere...</span></div>
+    <div class="aibody" id="abody">Bitte warten...</div>
+  </div>
+  <button class="btn btn-g btn-f" id="asave" style="display:none;margin-top:8px;" onclick="saveAna()">📓 Ins Tagebuch speichern</button>
+</div>
+
+<!-- ══ TAGEBUCH ══ -->
+<div id="pg-log" class="pg">
+  <div class="srow">
+    <div class="sc"><div class="sv" id="stdays">0</div><div class="sl">Tage</div></div>
+    <div class="sc"><div class="sv" id="stana">0</div><div class="sl">Analysen</div></div>
+    <div class="sc"><div class="sv" id="ststr">0🔥</div><div class="sl">Streak</div></div>
+  </div>
+  <div id="charts" style="display:none;">
+    <div class="cw">
+      <div class="cwt">Temp & rH Verlauf</div>
+      <div class="cwh"><svg class="ch" id="cht" viewBox="0 0 300 100" preserveAspectRatio="none"></svg></div>
+      <div class="cleg"><div class="cli"><div class="cld" style="background:var(--g)"></div>Temp</div><div class="cli"><div class="cld" style="background:var(--p)"></div>rH</div></div>
+    </div>
+    <div class="cw">
+      <div class="cwt">pH Verlauf</div>
+      <div class="cwh"><svg class="ch" id="chp" viewBox="0 0 300 100" preserveAspectRatio="none"></svg></div>
+    </div>
+  </div>
+  <div class="sec">Einträge</div>
+  <div id="loglist"><div class="empty"><div class="ei">📓</div><p>Noch keine Einträge.<br>Speichere deinen ersten Tag auf der <strong>Heute</strong>-Seite.</p></div></div>
+</div>
+
+<!-- ══ PLAN ══ -->
+<div id="pg-plan" class="pg">
+  <div class="pgrid c2" style="margin-bottom:11px;">
+    <div class="pc"><div class="pl">Blüte-Tag 1 war am</div><input type="date" id="bsdate" onchange="updStart()"></div>
+    <div class="pc"><div class="pl">Aktueller Tag</div><input type="number" id="bsday" oninput="updDay()"></div>
+  </div>
+  <div id="harvest" class="al warn" style="display:none;"><span>🌾</span><div id="harvtxt"></div></div>
+  <div class="al info"><span>ℹ️</span><div><strong>Slurrup:</strong> 9–10 Wochen Blüte · <strong>Purple Gelato:</strong> 8–9 Wochen · Trichome entscheiden!</div></div>
+  <div class="sec">Phasenverlauf</div>
+  <div class="tl" id="plantl"></div>
+  <div class="sec">Hesi 50% Düngplan (Light Mix)</div>
+  <div id="hesiplan"></div>
+</div>
+
+<!-- ══ GUIDE ══ -->
+<div id="pg-guide" class="pg">
+  <div class="al info"><span>📖</span><div>Schnellreferenz: Treez Tools Guide + Budgrower Guide + Strain-Daten + Light Mix Infos.</div></div>
+
+  <div class="sec">Strain-Daten</div>
+  <div class="rbox">
+    <div class="rtitle">Slurrup (In House Genetics) — 3 Pflanzen</div>
+    <div class="rrow"><span class="rk">Genetik</span><span class="rv">Slurri Crasher × Slurmint IX</span></div>
+    <div class="rrow"><span class="rk">Blütezeit</span><span class="rv a">9–10 Wochen (60–75 Tage)</span></div>
+    <div class="rrow"><span class="rk">Typ</span><span class="rv">Indica-Hybrid · Photoperiod</span></div>
+    <div class="rrow"><span class="rk">Ertrag</span><span class="rv g">Heavy · dichte Buds</span></div>
+    <div class="rrow"><span class="rk">Aroma</span><span class="rv">Traube · Gas · Berry</span></div>
+    <div class="rrow"><span class="rk">Stärke</span><span class="rv a">Indica-dominant · stark entspannend</span></div>
+  </div>
+  <div class="rbox">
+    <div class="rtitle">Purple Gelato (Feminized) — 3 Pflanzen</div>
+    <div class="rrow"><span class="rk">Genetik</span><span class="rv">Sunset Sherbet × Thin Mint GSC</span></div>
+    <div class="rrow"><span class="rk">Blütezeit</span><span class="rv a">8–9 Wochen (56–63 Tage)</span></div>
+    <div class="rrow"><span class="rk">Typ</span><span class="rv">Indica-dominant Hybrid · Photoperiod</span></div>
+    <div class="rrow"><span class="rk">Ertrag</span><span class="rv g">500–600g/m² · dichte Buds!</span></div>
+    <div class="rrow"><span class="rk">⚠️ Schimmel</span><span class="rv r">Sehr dichte Buds → rH &lt;45%!</span></div>
+    <div class="rrow"><span class="rk">Aroma</span><span class="rv">Berry · Grape · Lavender · Citrus</span></div>
+    <div class="rrow"><span class="rk">Tipp</span><span class="rv p">Nachts 5–8°C kälter → Violett-Färbung!</span></div>
+  </div>
+
+  <div class="sec">BioBizz Light Mix — Eigenschaften</div>
+  <div class="rbox">
+    <div class="rtitle">Substrate-Info (aus Biobizz-Daten)</div>
+    <div class="rrow"><span class="rk">Typ</span><span class="rv">Leichtes Substrat · niedriger EC</span></div>
+    <div class="rrow"><span class="rk">Start-Nährstoffe</span><span class="rv a">Wenige → früh düngen nötig</span></div>
+    <div class="rrow"><span class="rk">pH selbst-regulierend</span><span class="rv g">Micro-Organismen helfen bei pH</span></div>
+    <div class="rrow"><span class="rk">Überdüngung</span><span class="rv g">Toleranter als All-Mix</span></div>
+    <div class="rrow"><span class="rk">pH Gießwasser</span><span class="rv g">6.2–6.8 (Light Mix Erde)</span></div>
+    <div class="rrow"><span class="rk">Gießen</span><span class="rv b">Wenn Oberfläche trocken (3–4cm)</span></div>
+  </div>
+
+  <div class="sec">Blüte — Kernwerte</div>
+  <div class="rbox">
+    <div class="rtitle">Beide Guides + Recherche</div>
+    <div class="rrow"><span class="rk">Licht</span><span class="rv a">12h / 12h · SF4500 ~35–45cm</span></div>
+    <div class="rrow"><span class="rk">Temp Tag</span><span class="rv g">24–29°C (75–85°F)</span></div>
+    <div class="rrow"><span class="rk">Temp Nacht</span><span class="rv g">18–22°C</span></div>
+    <div class="rrow"><span class="rk">rH Blüte früh</span><span class="rv b">40–50% (Woche 1–4)</span></div>
+    <div class="rrow"><span class="rk">rH Blüte spät</span><span class="rv r">35–40% (Woche 5+)</span></div>
+    <div class="rrow"><span class="rk">pH Wasser</span><span class="rv g">6.2–6.5 (Hesi in Erde)</span></div>
+    <div class="rrow"><span class="rk">VPD Ziel</span><span class="rv p">1.0–1.5 kPa</span></div>
+    <div class="rrow"><span class="rk">Gießen</span><span class="rv b">Wenn oben trocken · mit 10–20% Drain</span></div>
+    <div class="rrow"><span class="rk">Flush</span><span class="rv r">15–17L/Topf · 1–2 Wochen vor Ernte</span></div>
+  </div>
+
+  <div class="sec">Gießen in Light Mix</div>
+  <div class="rbox">
+    <div class="rtitle">Korrekte Methode (Budgrower Guide + Light Mix)</div>
+    <div class="rrow"><span class="rk">Test</span><span class="rv">Fingertest 2–3cm tief</span></div>
+    <div class="rrow"><span class="rk">Wann gießen</span><span class="rv g">Wenn oben leicht trocken fühlt</span></div>
+    <div class="rrow"><span class="rk">Menge</span><span class="rv b">~500–700ml bis 10–20% Drain</span></div>
+    <div class="rrow"><span class="rk">Rhythmus</span><span class="rv">Früh Blüte: jeden 2. Tag</span></div>
+    <div class="rrow"><span class="rk">Rhythmus</span><span class="rv">Spät Blüte: jeden 3. Tag</span></div>
+    <div class="rrow"><span class="rk">Dünger-Rhythmus</span><span class="rv p">Wasser → Dünger → Wasser → Dünger</span></div>
+    <div class="rrow"><span class="rk">Nie täglich!</span><span class="rv r">Überwässerung = Wurzelfäule</span></div>
+  </div>
+
+  <div class="sec">Trichome & Ernte</div>
+  <div class="rbox">
+    <div class="rtitle">Reife-Indikatoren (beide Guides)</div>
+    <div class="rrow"><span class="rk">Klar</span><span class="rv m2">Unreif — noch warten</span></div>
+    <div class="rrow"><span class="rk">Milchig/trüb</span><span class="rv g">Höchster THC · energetisch</span></div>
+    <div class="rrow"><span class="rk">Bernstein 10–20%</span><span class="rv a">Ausgewogene Ernte</span></div>
+    <div class="rrow"><span class="rk">Bernstein &gt;30%</span><span class="rv p">Eher CBN · körperlich/sedativ</span></div>
+    <div class="rrow"><span class="rk">Stempel</span><span class="rv a">70–90% dunkel = erntereif</span></div>
+    <div class="rrow"><span class="rk">Trocknung</span><span class="rv b">7–14 Tage · 15–21°C · 45–55% rH</span></div>
+    <div class="rrow"><span class="rk">Curing</span><span class="rv g">2–4 Wochen · Gläser täglich lüften</span></div>
+  </div>
+
+  <div class="sec">Mängeldiagnose</div>
+  <div class="rbox">
+    <div class="rtitle">Schnell-Check (Treez Tools Guide)</div>
+    <div class="rrow"><span class="rk">Alte Blätter gelb</span><span class="rv a">N-Mangel → N erhöhen</span></div>
+    <div class="rrow"><span class="rk">Violett/Dunkel</span><span class="rv p">P-Mangel → P-Dünger</span></div>
+    <div class="rrow"><span class="rk">Blattränder braun</span><span class="rv a">K-Mangel → K erhöhen</span></div>
+    <div class="rrow"><span class="rk">Junge Bl. gelb</span><span class="rv">Fe/Mg-Mangel → pH prüfen!</span></div>
+    <div class="rrow"><span class="rk">Spitzen krümmen</span><span class="rv r">N-Toxizität → sofort spülen</span></div>
+    <div class="rrow"><span class="rk">Weiße Flecken</span><span class="rv b">Mehltau → rH senken · Lüfter</span></div>
+    <div class="rrow"><span class="rk">Grauer Schimmel</span><span class="rv r">Botrytis → sofort befallene Teile weg</span></div>
+  </div>
+
+  <div class="sec">iPhone Homescreen</div>
+  <div class="rbox">
+    <div class="rtitle">So fügst du die App dem Homescreen hinzu</div>
+    <div class="rrow"><span class="rk">1.</span><span class="rv">Diese Seite in Safari öffnen</span></div>
+    <div class="rrow"><span class="rk">2.</span><span class="rv">Teilen-Symbol tippen (□↑)</span></div>
+    <div class="rrow"><span class="rk">3.</span><span class="rv">„Zum Home-Bildschirm" wählen</span></div>
+    <div class="rrow"><span class="rk">4.</span><span class="rv">Name „Grow Journal" bestätigen</span></div>
+    <div class="rrow"><span class="rk">✅</span><span class="rv g">App-Icon erscheint wie eine native App!</span></div>
+  </div>
+</div>
+
+</div><!-- end pages -->
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// STRAIN DATA & PLAN
+// ══════════════════════════════════════
+const PLAN = [
+  { wk:'Woche 1', days:'Tag 1–7', title:'Stretch & Blüteinitiierung',
+    desc:'12/12 aktiv · Erste Pistillen · SCROG anpassen · Hesi Bloom + TNT 50% · pH 6.2–6.5 · Light Mix: gießen wenn 2cm trocken.',
+    tg:{t:'24–29°C',r:'45–55%',p:'6.2–6.5',g:'~500ml wenn Erde trocken',d:'Hesi Bloom + TNT 50%',l:'12/12 · 75%'},
+    tasks:[
+      {l:'Fingertest 2–3cm: Erde trocken?',s:'Nur gießen wenn trocken — nicht täglich!',c:'ccheck'},
+      {l:'Falls trocken: ~500ml pH 6.2–6.5 gießen',s:'Jeden 2.–3. Tag · 10–20% Drain anstreben',c:'cwater'},
+      {l:'Hesi Bloom + TNT Complex 50%',s:'Falls heute Dünger-Guss geplant',c:'cfeed'},
+      {l:'SCROG-Netz prüfen & Triebe einfädeln',s:'Stretch noch aktiv nutzen',c:'ctrain'},
+      {l:'Klima prüfen: 24–29°C / 45–55% rH',s:'SF4500 Abstand ~35–45cm bei 75% Leistung',c:'ccheck'},
+    ]
+  },
+  { wk:'Woche 2', days:'Tag 8–14', title:'Frühe Blüte — Erste Buds',
+    desc:'Stretch verlangsamt · Erste Knospen sichtbar · Fan-Leaves tucken · Drain-EC beobachten · Schädlingskontrolle.',
+    tg:{t:'24–29°C',r:'40–50%',p:'6.2–6.5',g:'~500ml jeden 2.–3. Tag',d:'Hesi Bloom + TNT 50%',l:'12/12 · 75%'},
+    tasks:[
+      {l:'Fingertest & gießen falls nötig (~500ml)',s:'NICHT täglich — Überwässerung vermeiden!',c:'cwater'},
+      {l:'Fan-Leaves tucken die Buds abschatten',s:'Luftzirkulation zu den Buds verbessern',c:'ctrain'},
+      {l:'Blattunterseiten prüfen (Spinne, Thripse)',s:'Früherkennung ist wichtig',c:'ccheck'},
+      {l:'Drain-EC & pH notieren',s:'Drain-pH Ziel: 6.0–6.5',c:'ccheck'},
+      {l:'Wochenfoto: Slurrup vs. Purple Gelato',s:'Entwicklung dokumentieren',c:'ccheck'},
+    ]
+  },
+  { wk:'Woche 3', days:'Tag 15–21', title:'Volle Blüte — Defoliation',
+    desc:'TNT einstellen · Nur noch Bloom Complex · Erste Defoliation · Buds verdicken · Geruch intensiver.',
+    tg:{t:'24–29°C',r:'40–50%',p:'6.2–6.5',g:'~500ml jeden 2.–3. Tag',d:'Hesi Bloom 50%',l:'12/12 · 75–100%'},
+    tasks:[
+      {l:'TNT Complex einstellen',s:'Ab jetzt nur noch Hesi Bloom Complex',c:'cfeed'},
+      {l:'Erste Defoliation (max. 20–25% Blattmasse)',s:'Nur Leaves entfernen die Budsites blockieren',c:'ctrain'},
+      {l:'VPD messen → Ziel: 1.0–1.3 kPa',s:'Temp/rH optimieren für dichte Buds',c:'ccheck'},
+      {l:'~500ml gießen wenn Erde trocken',s:'Substrate sorgfältig prüfen',c:'cwater'},
+    ]
+  },
+  { wk:'Woche 4–5', days:'Tag 22–35', title:'Blütenaufbau — Peak-Düngung',
+    desc:'PK 13/14 einführen · EC auf Peak · rH auf 40–45% · Trichome beobachten · ⚠️ Purple Gelato Schimmelgefahr!',
+    tg:{t:'24–28°C',r:'40–45%',p:'6.2–6.5',g:'~500ml wenn trocken',d:'Hesi Bloom + PK 13/14',l:'12/12 · 100%'},
+    tasks:[
+      {l:'Hesi PK 13/14 einführen (1–2ml/L)',s:'Bloom Complex 50% weitergeben',c:'cfeed'},
+      {l:'Gießen wenn trocken (~500ml)',s:'Rhythmus: Wasser → Dünger → Wasser → Dünger',c:'cwater'},
+      {l:'rH auf 40–45% halten!',s:'Purple Gelato hat dichte Buds → SCHIMMELGEFAHR!',c:'ccheck'},
+      {l:'Luftstrom direkt auf Buds richten',s:'SF4500 + Inline + Frischluft sicherstellen',c:'ccheck'},
+      {l:'Trichome ab Wk5 mit Lupe (60–100x)',s:'Klar → milchig = guter Fortschritt',c:'ccheck'},
+    ]
+  },
+  { wk:'Woche 6–7', days:'Tag 36–49', title:'Reifephase',
+    desc:'PK 13/14 einstellen · EC reduzieren · rH 35–40% · Trichome täglich prüfen · Slurrup: ~4 Wochen noch · Purple Gelato: ~2–3 Wochen noch.',
+    tg:{t:'20–26°C',r:'35–40%',p:'6.2–6.5',g:'~500ml wenn trocken',d:'Hesi Bloom 50% · EC runter',l:'12/12 · 100%'},
+    tasks:[
+      {l:'PK 13/14 ab Wk7 einstellen',s:'Nur Bloom Complex · EC ~1.2–1.4',c:'cfeed'},
+      {l:'rH auf 35–40% senken',s:'Schimmelschutz Endphase · gut belüften',c:'ccheck'},
+      {l:'Trichome täglich prüfen (60–100x)',s:'Milchig + 10–20% Bernstein = fast reif',c:'ccheck'},
+      {l:'Nachts 5–8°C kühler → Purple Gelato',s:'Kältere Nächte = Violett-Färbung intensiver',c:'ctrain'},
+    ]
+  },
+  { wk:'Woche 8–9', days:'Tag 50–63', title:'Flush — Kein Dünger mehr',
+    desc:'Purple Gelato: Ernte vorbereiten! · Slurrup: noch etwas länger (9–10 Wochen total) · Flush: 15–17L klares Wasser pro Topf.',
+    tg:{t:'18–24°C',r:'35–40%',p:'6.2',g:'FLUSH: 15–17L/Topf',d:'KEIN DÜNGER',l:'12/12'},
+    tasks:[
+      {l:'FLUSH: 15–17L klares Wasser pH 6.2',s:'Pro Topf · kein Dünger mehr! (Treez Tools Guide)',c:'cflush'},
+      {l:'Blattvergilbung beobachten',s:'Gewollt: Pflanze zieht Nährstoffe zurück',c:'ccheck'},
+      {l:'Purple Gelato: Trichome 10–20% Bernstein?',s:'8–9 Wochen = PG könnte schon reif sein!',c:'ccheck'},
+      {l:'Slurrup: Trichome täglich prüfen',s:'9–10 Wochen Blüte → evtl. noch etwas Zeit',c:'ccheck'},
+    ]
+  },
+  { wk:'Woche 9+', days:'Tag 63+', title:'Ernte & Trocknung',
+    desc:'Trichome entscheiden! · 48h Dunkelheit optional · Ernte morgens · Hängetrocknung 7–14 Tage · 15–21°C · 45–55% rH.',
+    tg:{t:'15–21°C (Trocknung)',r:'45–55% (Trocknung)',p:'—',g:'—',d:'—',l:'Dunkel!'},
+    tasks:[
+      {l:'48h Dunkelheit (optional)',s:'Terpensteigerung vor Ernte',c:'ctrain'},
+      {l:'Ernte morgens nach Licht aus',s:'Höchster Terpengehalt · sterile Werkzeuge',c:'ccheck'},
+      {l:'Hängetrocknung: 15–21°C · 45–55% rH',s:'7–14 Tage · Äste kopfüber hängen',c:'ccheck'},
+      {l:'Curing: Gläser ¾ füllen, täglich belüften',s:'2–4 Wochen · 60–65% rH in Glas',c:'ccheck'},
+    ]
+  }
+];
+
+const HESI = [
+  {wk:'Blüte Wk 1–2',b:'2ml/L',tnt:'1ml/L',pk:'—',n:'TNT für Stretch, Bloom für Blüteeinleitung'},
+  {wk:'Blüte Wk 3',b:'3ml/L',tnt:'auslaufen',pk:'—',n:'TNT reduzieren und dann einstellen'},
+  {wk:'Blüte Wk 4–5',b:'3ml/L',tnt:'—',pk:'1–2ml/L',n:'Peak-Düngung · PK 13/14 einführen'},
+  {wk:'Blüte Wk 6–7',b:'2ml/L',tnt:'—',pk:'→ 0',n:'PK auslaufen lassen · EC reduzieren'},
+  {wk:'Blüte Wk 8+',b:'—',tnt:'—',pk:'—',n:'FLUSH: 15–17L klares Wasser/Topf'},
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let S = (() => {
+  try { return {
+    day: parseInt(localStorage.getItem('gj3_day')||'16'),
+    log: JSON.parse(localStorage.getItem('gj3_log')||'[]'),
+    chk: JSON.parse(localStorage.getItem('gj3_chk')||'{}'),
+    chat: JSON.parse(localStorage.getItem('gj3_chat')||'[]'),
+  };} catch(e){ return {day:7,log:[],chk:{},chat:[]}; }
+})();
+
+function save(){
+  try{
+    localStorage.setItem('gj3_day', S.day);
+    localStorage.setItem('gj3_log', JSON.stringify(S.log));
+    localStorage.setItem('gj3_chk', JSON.stringify(S.chk));
+    localStorage.setItem('gj3_chat', JSON.stringify(S.chat));
+  }catch(e){}
+}
+
+function phase(d){
+  if(d<=7) return{ph:'Blüte · Woche 1',ti:'Stretch & Blüteinitiierung',i:0};
+  if(d<=14) return{ph:'Blüte · Woche 2',ti:'Frühe Blüte — Erste Buds',i:1};
+  if(d<=21) return{ph:'Blüte · Woche 3',ti:'Volle Blüte — Defoliation',i:2};
+  if(d<=35) return{ph:'Blüte · Woche 4–5',ti:'Blütenaufbau — Peak-Düngung',i:3};
+  if(d<=49) return{ph:'Blüte · Woche 6–7',ti:'Reifephase',i:4};
+  if(d<=63) return{ph:'Blüte · Woche 8–9',ti:'Flush — Kein Dünger!',i:5};
+  return{ph:'Ernte',ti:'Ernte & Trocknung',i:6};
+}
+
+function fdate(){return new Date().toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
+
+function toast(msg,col='var(--g)',tc='#000'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=col;t.style.color=tc;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function go(name, btn){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pg-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='today') renderToday();
+  if(name==='log') renderLog();
+  if(name==='plan') renderPlan();
+}
+
+// ══════════════════════════════════════
+// TODAY PAGE
+// ══════════════════════════════════════
+function renderToday(){
+  const d=S.day, {ph,ti,i}=phase(d), plan=PLAN[i];
+  const dk='d'+d, chk=S.chk[dk]||[];
+  const tasks=plan.tasks;
+
+  document.getElementById('bday').textContent=d;
+  document.getElementById('bphase').textContent=ph;
+  document.getElementById('btitle').textContent=ti;
+  document.getElementById('bmeta').textContent=`${chk.length}/${tasks.length} erledigt · ${fdate()} · Blütestart 11.04`;
+
+  // Week progress bar
+  const wb=document.getElementById('wbar'); wb.innerHTML='';
+  const frac=tasks.length?Math.round((chk.length/tasks.length)*7):0;
+  for(let j=0;j<7;j++){const s=document.createElement('div');s.className='ws'+(j<frac?' a':'');wb.appendChild(s);}
+
+  // Water indicator (every other day, odd days = water)
+  const isW = d%2===1;
+  document.getElementById('windi').innerHTML = isW
+    ? `<div class="wi on"><span class="wii">💧</span><div><strong>Heute ist Gießtag!</strong><br><span style="font-size:.68rem;opacity:.8">~500ml/Topf · pH 6.2–6.5 · nur wenn Erde 2–3cm trocken</span></div></div>`
+    : `<div class="wi off"><span class="wii">🌱</span><div><strong>Kein Gießtag — Ruhetag</strong><br><span style="font-size:.68rem">Nächster Gießtag: Tag ${d+1} · trotzdem Fingertest machen</span></div></div>`;
+
+  // Alerts
+  let al='';
+  if(d>=50&&d<=63) al='<div class="al err">⚠️ <div><strong>FLUSH:</strong> 15–17L klares Wasser pro Topf — KEIN Dünger!</div></div>';
+  else if(d>=63) al='<div class="al ok">🌾 <div>Erntezeitfenster! Trichome täglich prüfen.</div></div>';
+  else if(d>=36) al='<div class="al warn">🔍 <div><strong>Reifephase:</strong> Trichome täglich mit Lupe prüfen.</div></div>';
+  else if(d>=22) al='<div class="al warn">🍄 <div><strong>Purple Gelato:</strong> rH UNTER 45% halten! Dichte Buds = Schimmelgefahr!</div></div>';
+  document.getElementById('talerts').innerHTML=al;
+
+  // Targets
+  const tg=plan.tg;
+  document.getElementById('ttargets').innerHTML=`
+    <div class="rtitle">Zielwerte · ${ph}</div>
+    <div class="rrow"><span class="rk">Temperatur</span><span class="rv g">${tg.t}</span></div>
+    <div class="rrow"><span class="rk">Luftfeuchtigkeit</span><span class="rv b">${tg.r}</span></div>
+    <div class="rrow"><span class="rk">pH Wasser</span><span class="rv g">${tg.p}</span></div>
+    <div class="rrow"><span class="rk">Gießen</span><span class="rv ${isW?'b':'m2'}">${tg.g} ${isW?'← HEUTE':'← morgen'}</span></div>
+    <div class="rrow"><span class="rk">Dünger</span><span class="rv p">${tg.d}</span></div>
+    <div class="rrow"><span class="rk">Licht</span><span class="rv a">${tg.l}</span></div>`;
+
+  // Checklist
+  const cl=document.getElementById('tcl'); cl.innerHTML='';
+  tasks.forEach((t,j)=>{
+    const done=chk.includes(j);
+    const el=document.createElement('div');
+    el.className='ci fi'+(done?' done':'');
+    el.onclick=()=>toggleTask(d,j);
+    el.innerHTML=`<div class="cib">${done?'✓':''}</div><div class="cit"><div class="cil">${t.l}</div><div class="cis">${t.s}</div></div><span class="cat ${t.c}">${t.c.replace('c','')}</span>`;
+    cl.appendChild(el);
+  });
+
+  // Restore inputs from saved entry
+  const ent=S.log.find(e=>e.day===d&&e.type==='daily');
+  if(ent){
+    ['t','r','p','e','d','w','v'].forEach(k=>{const el=document.getElementById('i'+k);if(el&&ent[k])el.value=ent[k];});
+    if(ent.f) document.getElementById('if').value=ent.f;
+    if(ent.note) document.getElementById('tn').value=ent.note;
+  }
+}
+
+function toggleTask(d,j){
+  const dk='d'+d;
+  if(!S.chk[dk]) S.chk[dk]=[];
+  const a=S.chk[dk], pos=a.indexOf(j);
+  if(pos===-1) a.push(j); else a.splice(pos,1);
+  save(); renderToday();
+}
+
+function saveDay(){
+  const d=S.day, {ph,ti}=phase(d);
+  const entry={id:Date.now(),day:d,ph,ti,date:fdate(),
+    t:$('it').value,r:$('ir').value,p:$('ip').value,e:$('ie').value,
+    d:$('id').value,w:$('iw').value,f:$('if').value,v:$('iv').value,
+    note:$('tn').value,type:'daily'};
+  const ex=S.log.findIndex(e=>e.day===d&&e.type==='daily');
+  if(ex>=0) S.log[ex]=entry; else S.log.unshift(entry);
+  S.day=d+1; save(); renderToday();
+  ['it','ir','ip','ie','id','iw','iv'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  $('if').value=''; $('tn').value='';
+  toast('✓ Tag '+d+' gespeichert!');
+}
+
+function prevDay(){ if(S.day>1){ S.day--; save(); renderToday(); } }
+function nextDay(){ S.day++; save(); renderToday(); }
+function $(id){ return document.getElementById(id); }
+
+// ══════════════════════════════════════
+// CHAT — FIXED API CALL
+// ══════════════════════════════════════
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+
+function buildSys(){
+  const d=S.day, {ph}=phase(d);
+  const last=S.log.slice(0,3).map(e=>`Tag ${e.day}: Temp ${e.t||'?'}°C, rH ${e.r||'?'}%, pH ${e.p||'?'}, EC ${e.e||'?'}, Note: ${e.note||'—'}`).join('\n');
+  return `Du bist ein erfahrener Cannabis-Grow-Experte. Antworte IMMER auf Deutsch. Sei präzise, praxisnah und direkt.
+
+GROWER-SETUP:
+- Genetik: 3x Slurrup Feminized (9–10 Wochen Blüte, Indica-Hybrid, Traube/Gas-Aroma)
+- Genetik: 3x Purple Gelato Feminized (8–9 Wochen Blüte, dichte Buds = SCHIMMELGEFAHR!)
+- Medium: BioBizz Light Mix Erde (niedriger EC, früh düngen nötig, pH selbst-regulierend)
+- Licht: 12/12 · SF4500 LED
+- Dünger: Hesi-Schema 50% (Bloom Complex, TNT Complex, PK 13/14)
+- pH Gießwasser: 6.2–6.5 (Hesi in Erde)
+- Lüftung: SF4500 + Inline-Ventilator + Frischluft
+- Training: SCROG verwendet
+- Aktueller Blüte-Tag: ${d} (${ph})
+
+GIESSEN IN LIGHT MIX (WICHTIG!):
+- Fingertest 2–3cm tief — erst gießen wenn leicht trocken
+- ~500–700ml pro Guss mit 10–20% Drain
+- Frühe Blüte: ca. jeden 2. Tag · Späte Blüte: jeden 3. Tag
+- NIEMALS täglich gießen → Überwässerung, Wurzelfäule
+- Rhythmus: Wasser → Dünger → Wasser → Dünger (nicht jeden Guss düngen)
+
+FLUSH (Treez Tools Guide):
+- 15–17L klares Wasser pH 6.2 PRO TOPF
+- 1–2 Wochen vor Ernte, kein Dünger mehr
+
+LETZTE MESSWERTE:
+${last||'Noch keine eingetragen'}
+
+BLÜTEZEITEN:
+- Purple Gelato: 8–9 Wochen → könnte früher fertig sein
+- Slurrup: 9–10 Wochen → etwas länger
+
+Antworte konkret, nenne immer spezifische Werte, beziehe dich auf den aktuellen Blütetag ${d}. Maximal 300 Wörter pro Antwort.`;
+}
+
+let chatRunning = false;
+
+async function sendChat(){
+  const input=$('chinput');
+  const msg=input.value.trim();
+  if(!msg || chatRunning) return;
+
+  chatRunning=true;
+  input.value=''; ars(input);
+  $('chbtn').disabled=true;
+
+  addMsg('u', msg);
+  S.chat.push({role:'user', content:msg});
+
+  const loadEl = addMsg('a', '⏳ Denke nach...', true);
+
+  try {
+    // Build messages array (last 10 exchanges)
+    const messages = S.chat.slice(-12).map(m=>({role:m.role, content:m.content}));
+
+    const response = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: buildSys(),
+        messages: messages
+      })
+    });
+
+    if(!response.ok){
+      const err = await response.text();
+      throw new Error(`API ${response.status}: ${err.substring(0,200)}`);
+    }
+
+    const data = await response.json();
+    const reply = data.content?.find(b=>b.type==='text')?.text;
+    if(!reply) throw new Error('Keine Antwort vom Modell');
+
+    loadEl.textContent = reply;
+    loadEl.classList.remove('ld');
+    S.chat.push({role:'assistant', content:reply});
+    if(S.chat.length>40) S.chat=S.chat.slice(-40);
+    save();
+
+  } catch(err) {
+    loadEl.textContent = '⚠️ Fehler: '+err.message+'\n\nTipp: Stelle sicher dass du mit dem Internet verbunden bist. Der KI-Chat benötigt eine aktive Verbindung.';
+    loadEl.classList.remove('ld');
+    loadEl.style.color='var(--r)';
+  }
+
+  chatRunning=false;
+  $('chbtn').disabled=false;
+  scrollChat();
+}
+
+function addMsg(role, text, loading=false){
+  const log=$('chatlog');
+  const el=document.createElement('div');
+  el.className='msg '+role+(loading?' ld':'');
+  el.textContent=text;
+  log.appendChild(el);
+  scrollChat();
+  return el;
+}
+
+function scrollChat(){ const l=$('chatlog'); if(l) l.scrollTop=l.scrollHeight; }
+
+function ckd(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendChat(); } }
+
+function ars(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+function qq(q){
+  // Switch to chat tab
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  $('pg-chat').classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+  $('chinput').value=q;
+  sendChat();
+}
+
+// ══════════════════════════════════════
+// PHOTO ANALYSIS
+// ══════════════════════════════════════
+let photoB64=null, curAna=null, curPhoto=null;
+
+function hphoto(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const url=ev.target.result;
+    photoB64=url.split(',')[1]; curPhoto=url;
+    $('pimg').src=url; $('pimg').style.display='block';
+    $('abtn').disabled=false;
+    $('ad').value=S.day;
+  };
+  r.readAsDataURL(file);
+}
+
+async function runAna(){
+  if(!photoB64) return;
+  const d=$('ad').value||S.day, t=$('at').value, r=$('ar').value, n=$('an').value;
+  const {ph}=phase(parseInt(d));
+  const box=$('aibox'), body=$('abody'), sp=$('asp'), st=$('asta');
+  box.style.display='block'; body.className='aibody'; body.textContent='Analysiere...';
+  sp.style.display='block'; st.textContent='Claude analysiert...';
+  $('abtn').disabled=true; $('asave').style.display='none';
+
+  const sys=`Du bist ein Cannabis-Grow-Experte. Analysiere das Foto präzise auf Deutsch.
+
+Setup: 3x Slurrup (9–10 Wk Blüte) + 3x Purple Gelato (8–9 Wk, SCHIMMELGEFAHR!)
+Medium: BioBizz Light Mix · 12/12 SF4500 · Hesi 50% · pH 6.2–6.5
+Blüte-Tag: ${d} (${ph}) · Temp: ${t||'?'}°C · rH: ${r||'?'}% · Grower-Notiz: "${n||'keine'}"
+
+Antworte IMMER auf Deutsch mit dieser Struktur:
+
+🌿 GESAMTZUSTAND
+[2–3 Sätze zur Gesamtbewertung]
+
+🔍 BEOBACHTUNGEN
+• Blütenentwicklung: [Stadium, Größe, Dichte]
+• Blattgesundheit: [Farbe, Flecken, Mängel?]
+• Stresszeichen: [Hitzestress, Über-/Unterwässerung?]
+• Sortenvergleich: [Slurrup vs. Purple Gelato falls erkennbar]
+
+⚠️ PROBLEME
+[Konkrete Diagnose oder "Keine Probleme erkannt"]
+
+✅ AUFGABEN FÜR HEUTE
+1. [Konkret mit Wert/Menge]
+2. [Konkret]
+3. [Konkret]
+
+💡 PROFI-TIPP
+[Spezifisch für Blütetag ${d} und diese Genetiken]`;
+
+  try{
+    const res=await fetch(ANTHROPIC_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoB64}},
+          {type:'text',text:`Analysiere meine Pflanzen. Blütetag ${d}.${n?' Beobachtung: '+n:''}`}
+        ]}]
+      })
+    });
+    if(!res.ok) throw new Error('API '+res.status);
+    const data=await res.json();
+    const txt=data.content?.find(b=>b.type==='text')?.text||'Keine Antwort.';
+    body.textContent=txt; body.className='aibody ok fi';
+    sp.style.display='none'; st.textContent='Analyse abgeschlossen ✓';
+    curAna=txt; $('asave').style.display='flex'; $('abtn').disabled=false;
+  }catch(err){
+    body.textContent='⚠️ Fehler: '+err.message; sp.style.display='none';
+    $('abtn').disabled=false;
+  }
+}
+
+function saveAna(){
+  const d=parseInt($('ad').value||S.day), {ph,ti}=phase(d);
+  S.log.unshift({id:Date.now(),day:d,ph,ti,date:fdate(),
+    t:$('at').value,r:$('ar').value,note:$('an').value,
+    ana:curAna,photo:curPhoto,type:'analysis'});
+  save(); toast('✓ Analyse gespeichert!');
+  $('asave').textContent='✓ Gespeichert!';
+  setTimeout(()=>$('asave').textContent='📓 Ins Tagebuch speichern',2000);
+}
+
+// ══════════════════════════════════════
+// LOG PAGE
+// ══════════════════════════════════════
+function renderLog(){
+  const daily=S.log.filter(e=>e.type==='daily');
+  const anas=S.log.filter(e=>e.type==='analysis');
+  $('stdays').textContent=daily.length;
+  $('stana').textContent=anas.length;
+  let streak=0;
+  const days=[...new Set(daily.map(e=>e.day))].sort((a,b)=>b-a);
+  if(days.length){streak=1;for(let i=1;i<days.length;i++){if(days[i-1]-days[i]===1)streak++;else break;}}
+  $('ststr').textContent=streak+'🔥';
+
+  if(daily.length>=2){
+    $('charts').style.display='block';
+    drawChart('cht',daily.slice(0,12).reverse().map(e=>parseFloat(e.t)||0),daily.slice(0,12).reverse().map(e=>parseFloat(e.r)||0),daily.slice(0,12).reverse().map(e=>'T'+e.day),[15,35],[20,70]);
+    drawChart('chp',daily.slice(0,12).reverse().map(e=>parseFloat(e.p)||0),null,daily.slice(0,12).reverse().map(e=>'T'+e.day),[5.5,7.5],[5.5,7.5]);
+  }
+
+  const list=$('loglist');
+  if(!S.log.length){list.innerHTML='<div class="empty"><div class="ei">📓</div><p>Noch keine Einträge.<br>Speichere deinen ersten Tag auf der <strong>Heute</strong>-Seite.</p></div>';return;}
+  list.innerHTML='';
+  S.log.forEach(e=>{
+    const div=document.createElement('div');
+    div.className='le fi'+(e.type==='analysis'?' ana':'');
+    const params=[e.t?`🌡️${e.t}°C`:'',e.r?`💧${e.r}%`:'',e.p?`⚗️pH${e.p}`:'',e.e?`⚡EC${e.e}`:'',e.w?`🚿${e.w}ml`:'',e.f?`🌿${e.f}`:''].filter(Boolean);
+    div.innerHTML=`<div class="letop"><div><div class="leday">Tag ${e.day} <span class="lbadge ${e.type==='analysis'?'lba':'lbd'}">${e.type==='analysis'?'Foto-Analyse':'Tageseintrag'}</span></div><div class="ledate">${e.date} · ${e.ph}</div></div><button class="ledel" onclick="delEntry(${e.id})">✕</button></div>${params.length?`<div class="leparams">${params.map(p=>`<span class="lep">${p}</span>`).join('')}</div>`:''}${e.note?`<div class="lenote">${e.note}</div>`:''}${e.ana?`<div class="leana"><strong>🤖 KI-Analyse:</strong>\n${e.ana}</div>`:''}${e.photo?`<img class="leimg" src="${e.photo}" alt="Foto">`:''}`;
+    list.appendChild(div);
+  });
+}
+
+function delEntry(id){ if(!confirm('Eintrag löschen?'))return; S.log=S.log.filter(e=>e.id!==id); save(); renderLog(); }
+
+function drawChart(id,d1,d2,lbls,r1,r2){
+  const svg=$(id); svg.innerHTML='';
+  const W=300,H=100,P=8;
+  const[mn1,mx1]=r1, [mn2,mx2]=r2||r1;
+  const tx=i=>P+(i/(d1.length-1||1))*(W-2*P);
+  const ty=(v,mn,mx)=>H-P-((v-mn)/(mx-mn||1))*(H-2*P);
+  const g=document.createElementNS('http://www.w3.org/2000/svg','line');
+  g.setAttribute('x1',P);g.setAttribute('y1',H/2);g.setAttribute('x2',W-P);g.setAttribute('y2',H/2);
+  g.setAttribute('class','cax');g.setAttribute('stroke-dasharray','3,3');svg.appendChild(g);
+  if(d1.filter(v=>v>0).length>1){
+    const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    pl.setAttribute('points',d1.map((v,i)=>`${tx(i)},${ty(v,mn1,mx1)}`).join(' '));
+    pl.setAttribute('class','cl1');svg.appendChild(pl);
+    d1.forEach((v,i)=>{if(!v)return;const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',tx(i));c.setAttribute('cy',ty(v,mn1,mx1));c.setAttribute('r',2.5);c.setAttribute('class','cd1');svg.appendChild(c);});
+  }
+  if(d2&&d2.filter(v=>v>0).length>1){
+    const pl=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    pl.setAttribute('points',d2.map((v,i)=>`${tx(i)},${ty(v,mn2,mx2)}`).join(' '));
+    pl.setAttribute('class','cl2');svg.appendChild(pl);
+  }
+  lbls.forEach((l,i)=>{
+    if(i%3!==0&&i!==lbls.length-1)return;
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',tx(i));t.setAttribute('y',H-1);t.setAttribute('text-anchor','middle');t.setAttribute('class','clbl');
+    t.textContent=l;svg.appendChild(t);
+  });
+}
+
+// ══════════════════════════════════════
+// PLAN PAGE
+// ══════════════════════════════════════
+function renderPlan(){
+  const d=S.day;
+  $('bsday').value=d;
+  // Harvest estimate (Purple Gelato first, ~63 days; Slurrup ~70 days)
+  // Blütestart 11.04.2026 | Purple Gelato ~13.06.2026 | Slurrup ~20.06.2026
+  const pgLeft=Math.max(0,63-d), slLeft=Math.max(0,70-d);
+  const hel=$('harvest'), ht=$('harvtxt');
+  hel.style.display='flex';
+  if(pgLeft<=0&&slLeft<=0) {hel.className='al ok'; ht.innerHTML='🌾 <strong>Beide Sorten im Erntezeitfenster!</strong> Trichome täglich prüfen.';}
+  else if(pgLeft<=0) {hel.className='al ok'; ht.innerHTML=`🌾 <strong>Purple Gelato: ERNTEREIF!</strong> (ca. 13.06.2026) · Slurrup noch ca. ${slLeft} Tage (ca. 20.06.2026).`;}
+  else {hel.className='al warn'; ht.innerHTML=`🌱 Umtopfung: 09.04.2026 · Blütestart: 11.04.2026 · Heute: Tag ${d}<br>📅 Purple Gelato Ernte: ca. <strong>13.06.2026</strong> (noch ${pgLeft} Tage) · Slurrup: ca. <strong>20.06.2026</strong> (noch ${slLeft} Tage)`;}
+
+  const tl=$('plantl'); tl.innerHTML='';
+  const ranges=[[1,7],[8,14],[15,21],[22,35],[36,49],[50,63],[64,999]];
+  PLAN.forEach((p,i)=>{
+    const[s,e]=ranges[i], isAct=d>=s&&d<=e, isDn=d>e;
+    const el=document.createElement('div');
+    el.className='tli'+(isAct?' act':isDn?' dn':'');
+    el.innerHTML=`<div class="tld"></div><div class="tlw">${p.wk} · ${p.days}</div><div class="tlt">${p.title}</div><div class="tld2">${p.desc}</div>`;
+    tl.appendChild(el);
+  });
+
+  const hp=$('hesiplan'); hp.innerHTML='';
+  HESI.forEach(h=>{
+    const el=document.createElement('div');
+    el.className='rbox'; el.style.marginBottom='7px';
+    el.innerHTML=`<div class="rrow"><span class="rk" style="font-weight:700">${h.wk}</span><span class="rv a">Bloom ${h.b} · TNT ${h.tnt} · PK ${h.pk}</span></div><div style="font-size:.65rem;color:var(--m2);padding:3px 0 1px">${h.n}</div>`;
+    hp.appendChild(el);
+  });
+}
+
+function updDay(){
+  const v=parseInt($('bsday').value); if(v>0){ S.day=v; save(); renderPlan(); renderToday(); }
+}
+function updStart(){
+  const dt=new Date($('bsdate').value), diff=Math.floor((new Date()-dt)/864e5)+1;
+  if(diff>0){ S.day=diff; localStorage.setItem('gj3_bstart',$('bsdate').value); save(); renderPlan(); renderToday(); $('bsday').value=diff; }
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+// Set bloom start date
+const bsd=$('bsdate');
+// Fixed bloom start: 11.04.2026
+const bloomFixed = '2026-04-11';
+bsd.value = localStorage.getItem('gj3_bstart') || bloomFixed;
+$('bsday').value=S.day;
+$('ad').value=S.day;
+
+// Restore chat history UI
+if(S.chat.length){
+  const log=$('chatlog'); log.innerHTML='';
+  // Show welcome msg first
+  const w=document.createElement('div');w.className='msg a';
+  w.innerHTML='Hallo! Ich bin dein persönlicher Grow-Assistent 🌿<br><br>Ich kenne dein komplettes Setup:<br>• <strong>3x Slurrup + 3x Purple Gelato</strong> (Feminized)<br>• Indoor · Erde (BioBizz Light Mix) · 12/12<br>• Hesi-Schema 50% · pH 6.2–6.5<br>• SF4500 LED · SCROG · Inline-Lüfter<br><br><strong>Slurrup:</strong> 9–10 Wochen Blüte<br><strong>Purple Gelato:</strong> 8–9 Wochen · dichte Buds → Schimmelrisiko!<br><br>Stelle mir jede Frage!';
+  log.appendChild(w);
+  // Show last 20 messages
+  S.chat.slice(-20).forEach(m=>{const el=document.createElement('div');el.className='msg '+m.role;el.textContent=m.content;log.appendChild(el);});
+  scrollChat();
+}
+
+// Initial render
+renderToday();
+renderPlan();
+</script>
+</body>
+</html>
